@@ -3,9 +3,8 @@
 ## 1. Project Overview
 - This project focuses on integrating a PIR (Passive Infrared) motion sensor with a Raspberry Pi Camera Module. The system is designed to detect physical movement in its surroundings and automatically trigger a photo capture event. By utilizing the gpiozero and picamera2 libraries, I implemented an automated monitoring system that bridge hardware sensing with digital imaging.
 ## 2. Execution Screenshots
-- screenshot of the IDE
-![IDE Execution](./hw3-1.png)
-![IDE Execution](./hw3-2.png)
+- Below is the screenshot of the IDE while the code is running.
+![IDE Execution](./hw3.png)
 
 ## 3. Working Video
 - GIF Preview:
