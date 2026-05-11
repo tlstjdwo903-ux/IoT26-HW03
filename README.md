@@ -1,4 +1,4 @@
-# IoT26-HW01: Control Raspberry Pi Digital Outputs with Python (LED)
+# IoT26-HW03: Control Raspberry Pi Digital Outputs with Python (LED)
 
 ## 1. Project Overview
 - This project focuses on integrating a PIR (Passive Infrared) motion sensor with a Raspberry Pi Camera Module. The system is designed to detect physical movement in its surroundings and automatically trigger a photo capture event. By utilizing the gpiozero and picamera2 libraries, I implemented an automated monitoring system that bridge hardware sensing with digital imaging.
