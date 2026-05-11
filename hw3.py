@@ -1,6 +1,3 @@
-# Project 13 - Burglar Detector With Photo Capture
-# Raspberry Pi 5 / Picamera2 version
-
 from gpiozero import Button, MotionSensor
 from picamera2 import Picamera2, Preview
 from libcamera import Transform
@@ -9,75 +6,74 @@ from pathlib import Path
 from datetime import datetime
 from threading import Lock, Event
 
-# GPIO pins - BCM numbering
-button = Button(17, bounce_time=0.05)
-pir = MotionSensor(27)
+# Hardware Setup: Assign GPIO pins using BCM numbering
+button = Button(17, bounce_time=0.05) # Stop button with debouncing
+pir = MotionSensor(27)                # Passive Infrared (PIR) motion sensor
 
-# Camera setup
+# Camera Initialization
 picam2 = Picamera2()
 
-# camera.rotation = 180 대체
-# 180도 회전 = hflip + vflip
+# Configure camera rotation and resolution
+# Transform(hflip=True, vflip=True) is equivalent to a 180-degree rotation
 camera_config = picam2.create_preview_configuration(
     main={"size": (1280, 720)},
     transform=Transform(hflip=True, vflip=True)
 )
-
 picam2.configure(camera_config)
 
-# GUI 환경에서 preview 띄우기
-# SSH/headless 환경이면 이 줄을 주석 처리해도 됨
+# Start live preview (Use QTGL for GUI environments)
 picam2.start_preview(Preview.QTGL)
-
 picam2.start()
-sleep(2)  # camera warm-up
+sleep(2)  # Allow the sensor to warm up and adjust to light levels
 
-# Save path
+# Directory Setup: Ensure the save path exists on the Desktop
 save_dir = Path("/home/pi/Desktop")
 save_dir.mkdir(parents=True, exist_ok=True)
 
+# State Variables for capture logic
 photo_count = 0
 last_capture_time = 0
-capture_interval = 10  # seconds
+capture_interval = 10  # Minimum cooldown period between captures (seconds)
 
+# Threading tools for safe concurrent operations
 capture_lock = Lock()
 stop_event = Event()
 
-
 def stop_camera():
+    """Trigger the stop event to terminate the program safely."""
     print("Stopping camera...")
     stop_event.set()
 
-
 def take_photo():
+    """Capture a photo when motion is detected, with a time-based cooldown."""
     global photo_count, last_capture_time
 
     with capture_lock:
         now = monotonic()
 
-        # PIR 센서가 계속 감지할 때 너무 많이 찍히는 것 방지
+        # Prevent redundant captures during continuous motion detection
         if now - last_capture_time < capture_interval:
             return
 
         last_capture_time = now
         photo_count += 1
 
+        # Generate a unique filename using timestamp
         filename = save_dir / f"image_{photo_count}_{datetime.now():%Y%m%d_%H%M%S}.jpg"
 
+        # Capture and save the frame to the specified file
         picam2.capture_file(str(filename))
         print(f"A photo has been taken: {filename}")
 
-
-# Button press stops the program
-button.when_pressed = stop_camera
-
-# Motion detection captures photo
-pir.when_motion = take_photo
+# Event binding: Map hardware triggers to Python functions
+button.when_pressed = stop_camera   # Button click signals exit
+pir.when_motion = take_photo        # Motion triggers photo capture
 
 try:
     print("Burglar detector is running...")
     print("Press the button to stop.")
 
+    # Main loop: Maintain execution until the stop button is pressed
     while not stop_event.is_set():
         sleep(0.1)
 
@@ -85,6 +81,7 @@ except KeyboardInterrupt:
     print("Interrupted by keyboard.")
 
 finally:
+    # Proper resource cleanup to avoid camera hardware conflicts
     print("Cleaning up camera...")
     picam2.stop_preview()
     picam2.stop()
